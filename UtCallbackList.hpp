@@ -6,7 +6,6 @@
 #define PLAYGROUND_UTCALLBACKLIST_HPP
 
 
-#include <memory>
 #include <vector>
 #include <functional>
 
@@ -21,6 +20,16 @@ public:
 
     class CallbackInterface {
     public:
+        CallbackInterface() = default;
+
+        CallbackInterface(const CallbackInterface&) = delete;
+
+        CallbackInterface(CallbackInterface&& aRhs)
+                : mListConnectedTo(aRhs.mListConnectedTo), mConnectedFunctionIndex(aRhs.mConnectedFunctionIndex) {
+            aRhs.mListConnectedTo = nullptr;
+            mListConnectedTo->mCallbacks[mConnectedFunctionIndex] = this;
+        }
+
         virtual ~CallbackInterface() {
             if (mListConnectedTo != nullptr) {
                 mListConnectedTo->disconnect(mConnectedFunctionIndex);
@@ -60,9 +69,9 @@ protected:
 using CallbackInterface=CallbackListInterface::CallbackInterface;
 
 //todo document CallbackHolder
-class CallbackHolder : public std::vector<std::unique_ptr<CallbackInterface>> {
+class CallbackHolder : public std::vector<CallbackInterface> {
 public:
-    auto emplace(std::unique_ptr<CallbackInterface>&& aCallbackPtr)
+    auto emplace(CallbackInterface&& aCallbackPtr)
     -> decltype(emplace_back(std::move(aCallbackPtr))) {
         return emplace_back(std::move(aCallbackPtr));
     }
@@ -96,9 +105,9 @@ public:
     /// of this returned unique_ptr
     template<typename Functor>
     [[nodiscard]]  std::enable_if_t<std::is_constructible<callback_function_t, Functor>::value,
-            std::unique_ptr<CallbackInterface>> connect(Functor&& aFunctor) {
+            CallbackInterface> connect(Functor&& aFunctor) {
         mFunctions.emplace_back(std::forward<Functor>(aFunctor));
-        return std::make_unique<CallbackInterface>(this, mFunctions.size() - 1);
+        return CallbackInterface{this, mFunctions.size() - 1};
     }
 
     /// @brief Connects a member function of the provided object instance to be called every time
@@ -107,7 +116,7 @@ public:
     /// @param aMemberFunc the member function belonging to the provided object
     /// @return unique_ptr to newly connected callback, should be added to a callback holder.
     template<typename T, typename CONVERTIBLE_R, typename... CONVERTIBLE_CB_ARGS>
-    [[nodiscard]] std::unique_ptr<CallbackInterface> connect(T* aObject, CONVERTIBLE_R(T::*aMemberFunc)(CONVERTIBLE_CB_ARGS...)) {
+    [[nodiscard]] CallbackInterface connect(T* aObject, CONVERTIBLE_R(T::*aMemberFunc)(CONVERTIBLE_CB_ARGS...)) {
         return connect([=](CONVERTIBLE_CB_ARGS... aArgs) -> CONVERTIBLE_R { return (aObject->*aMemberFunc)(aArgs...); });
     };
 

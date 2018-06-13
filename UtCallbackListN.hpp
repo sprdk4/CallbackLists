@@ -41,14 +41,14 @@ protected:
             //call function stored to be called no matter what the enumeration is.
             mGlobalList.basicCall(aArgs...);
             //prevent enumerations with nothing to ever be called in them from building up in the EnumMap
-            if (Empty()) {
+            if ((*this).Empty()) {
                 mGlobalList.removeEnumeration(mEnumVal);
             }
         }
     protected:
         void disconnect(std::size_t index) override {
             base_cb_list_t::disconnect(index);
-            if (Empty()) {
+            if ((*this).Empty()) {
                 mGlobalList.removeEnumeration(mEnumVal);
             }
         };

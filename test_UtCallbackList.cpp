@@ -26,7 +26,6 @@ BOOST_AUTO_TEST_SUITE(CallbackListTests)
         holder.emplace(list.connect(&a, &meow::memFunc));
         BOOST_REQUIRE(!list.Empty());
         BOOST_REQUIRE(!holder.empty());
-        BOOST_REQUIRE(holder.back() != nullptr);
 
         //test calling member functors
         for (int numCalled:{1, 6, -60, 10063, -79824, 0}) {
@@ -86,7 +85,6 @@ BOOST_AUTO_TEST_SUITE(CallbackHolderTests)
             holder.emplace(list.connect(asFunctionPtr));
             BOOST_REQUIRE(!list.Empty());
             BOOST_REQUIRE(!holder.empty());
-            BOOST_REQUIRE(holder.back() != nullptr);
 
             list('_', &changedChar);
             BOOST_CHECK_EQUAL('_', changedChar);
